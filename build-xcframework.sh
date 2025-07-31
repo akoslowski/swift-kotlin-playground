@@ -8,7 +8,7 @@ echo "Building Kotlin code for iOS targets..."
 
 KOTLIN_NATIVE_BIN="kotlinc-native"
 
-
+file_list=$(find src -name "*.kt" | tr '\n' ' ')
 
 # Create output directories
 mkdir -p build/frameworks/iosArm64
@@ -19,7 +19,7 @@ mkdir -p build/frameworks/macosX64
 
 # Build for iOS arm64 (device)
 echo "Building for iOS arm64..."
-$KOTLIN_NATIVE_BIN src/commonMain/kotlin/Kotlib.kt \
+$KOTLIN_NATIVE_BIN src/Kotlib.kt \
     -target ios_arm64 \
     -produce framework \
     -module-name Kotlib \
@@ -29,7 +29,7 @@ $KOTLIN_NATIVE_BIN src/commonMain/kotlin/Kotlib.kt \
 
 # Build for iOS x64 (simulator)
 echo "Building for iOS x64 simulator..."
-$KOTLIN_NATIVE_BIN src/commonMain/kotlin/Kotlib.kt \
+$KOTLIN_NATIVE_BIN src/Kotlib.kt \
     -target ios_x64 \
     -produce framework \
     -module-name Kotlib \
@@ -39,7 +39,7 @@ $KOTLIN_NATIVE_BIN src/commonMain/kotlin/Kotlib.kt \
 
 # Build for iOS simulator arm64 (M1 simulator)
 echo "Building for iOS simulator arm64..."
-$KOTLIN_NATIVE_BIN src/commonMain/kotlin/Kotlib.kt \
+$KOTLIN_NATIVE_BIN src/Kotlib.kt \
     -target ios_simulator_arm64 \
     -produce framework \
     -module-name Kotlib \
@@ -49,7 +49,7 @@ $KOTLIN_NATIVE_BIN src/commonMain/kotlin/Kotlib.kt \
 
 # Build for macOS arm64 (Apple Silicon)
 echo "Building for macOS arm64..."
-$KOTLIN_NATIVE_BIN src/commonMain/kotlin/Kotlib.kt \
+$KOTLIN_NATIVE_BIN src/Kotlib.kt \
     -target macos_arm64 \
     -produce framework \
     -module-name Kotlib \
@@ -59,7 +59,7 @@ $KOTLIN_NATIVE_BIN src/commonMain/kotlin/Kotlib.kt \
 
 # Build for macOS x64 (Intel)
 echo "Building for macOS x64..."
-$KOTLIN_NATIVE_BIN src/commonMain/kotlin/Kotlib.kt \
+$KOTLIN_NATIVE_BIN src/Kotlib.kt \
     -target macos_x64 \
     -produce framework \
     -module-name Kotlib \
