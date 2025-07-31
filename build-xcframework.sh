@@ -8,7 +8,11 @@ echo "Building Kotlin code for iOS targets..."
 
 KOTLIN_NATIVE_BIN="kotlinc-native"
 
-file_list=$(find src -name "*.kt" | tr '\n' ' ')
+# Ensure kotlinc-native is available
+if ! command -v $KOTLIN_NATIVE_BIN &> /dev/null; then
+    echo "Error: $KOTLIN_NATIVE_BIN is not installed or not in your PATH."
+    exit 1
+fi
 
 # Create output directories
 mkdir -p build/frameworks/iosArm64
