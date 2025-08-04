@@ -1,11 +1,4 @@
 /**
- * Main function for console applications
- */
-fun main() {
-    println("Hello, World!")
-}
-
-/**
  * Returns a friendly greeting message from Kotlin Multiplatform
  * 
  * @return A greeting string
