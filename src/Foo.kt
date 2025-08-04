@@ -10,6 +10,8 @@ public data class Foo(
         throw Exception("Oops!")
     }
 
+    // https://github.com/kotlin-hands-on/kotlin-swift-interopedia/blob/main/docs/overview/Collections.md
+
     public fun getList(): List<Int> {
         return listOf(1,2,3)
     }
@@ -29,4 +31,9 @@ public data class Foo(
     public fun set(collection: List<Int>){
         println(collection)
     }
+
+    public fun withLamda(block: (String) -> Unit) {
+        block("Hello from Kotlin!")
+    }
+
 }

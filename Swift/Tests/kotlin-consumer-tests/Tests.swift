@@ -50,4 +50,10 @@ import Testing
     // #expect(f.getSet() == expectedArray) // Binary operator '==' cannot be applied to operands of type 'Set<KotlinInt>' and 'KotlinArray<KotlinInt>'
 
     #expect(f.getSet() == [1, 2])
+
+    var str = ""
+    f.withLamda { incomingString in
+        str = "### \(incomingString) ###"
+    }
+    #expect(str == "### Hello from Kotlin! ###")
 }
