@@ -3,6 +3,8 @@ BUILD_DIR := ./build
 SRC_DIRS := ./src
 SRC_FILES := $(shell find $(SRC_DIRS) -name '*.kt')
 FRAMEWORK_NAME := Kotlib.framework
+XCFRAMEWORK_NAME := Kotlib.xcframework
+XCFRAMEWORK_OUTPUT_PATH := $(BUILD_DIR)/$(XCFRAMEWORK_NAME)
 
 arch_path = $(BUILD_DIR)/frameworks/$(strip $1)
 framework_arch_path = $(call arch_path, $1)/$(FRAMEWORK_NAME)
@@ -14,8 +16,6 @@ FRAMEWORK_MACOS_ARM64_X64 := $(call framework_arch_path, macos_arm64_x64)
 FRAMEWORK_IOS_ARM64 := $(call framework_arch_path, ios_arm64)
 FRAMEWORK_IOS_SIMULATOR_ARM64 := $(call framework_arch_path, ios_simulator_arm64)
 
-.PHONY: clean macos ios universal
-
 build_framework = $(KOTLIN_NATIVE_BIN) $(SRC_FILES) \
 		-target $(strip $1) \
 		-produce framework \
@@ -24,8 +24,12 @@ build_framework = $(KOTLIN_NATIVE_BIN) $(SRC_FILES) \
 		-Xexport-kdoc \
 		-output $(call framework_arch_path, $1)
 
+.PHONY: clean macos ios universal run test
+
+all: clean universal
+
 $(BUILD_DIR):
-	@mkdir -p $@
+	mkdir -p $@
 
 $(PACKAGE_SWIFT_PATH): $(BUILD_DIR)
 	@echo "// swift-tools-version:6.1" > $(PACKAGE_SWIFT_PATH)
@@ -59,28 +63,32 @@ $(FRAMEWORK_IOS_ARM64): $(BUILD_DIR) $(SRC_FILES)
 $(FRAMEWORK_IOS_SIMULATOR_ARM64): $(BUILD_DIR) $(SRC_FILES)
 	$(call build_framework, ios_simulator_arm64)
 
-# MARK: phonies
-
 macos: $(PACKAGE_SWIFT_PATH) $(FRAMEWORK_MACOS_ARM64_X64)
-	rm -Rf $(BUILD_DIR)/Kotlib.xcframework
+	rm -Rf $(XCFRAMEWORK_OUTPUT_PATH)
 	xcodebuild -create-xcframework \
 		-framework $(call framework_arch_path, macos_arm64_x64) \
-		-output $(BUILD_DIR)/Kotlib.xcframework
+		-output $(XCFRAMEWORK_OUTPUT_PATH)
 
 ios: $(PACKAGE_SWIFT_PATH) $(FRAMEWORK_IOS_ARM64) $(FRAMEWORK_IOS_SIMULATOR_ARM64)
-	rm -Rf $(BUILD_DIR)/Kotlib.xcframework
+	rm -Rf $(XCFRAMEWORK_OUTPUT_PATH)
 	xcodebuild -create-xcframework \
 		-framework $(call framework_arch_path, ios_arm64) \
 		-framework $(call framework_arch_path, ios_simulator_arm64) \
-		-output $(BUILD_DIR)/Kotlib.xcframework
+		-output $(XCFRAMEWORK_OUTPUT_PATH)
 
 universal: $(PACKAGE_SWIFT_PATH) $(FRAMEWORK_MACOS_ARM64_X64) $(FRAMEWORK_IOS_ARM64) $(FRAMEWORK_IOS_SIMULATOR_ARM64)
-	rm -Rf $(BUILD_DIR)/Kotlib.xcframework
+	rm -Rf $(XCFRAMEWORK_OUTPUT_PATH)
 	xcodebuild -create-xcframework \
 		-framework $(call framework_arch_path, macos_arm64_x64) \
 		-framework $(call framework_arch_path, ios_arm64) \
 		-framework $(call framework_arch_path, ios_simulator_arm64) \
-		-output $(BUILD_DIR)/Kotlib.xcframework
+		-output $(XCFRAMEWORK_OUTPUT_PATH)
 
 clean:
-	@rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
+
+run:
+	swift run --package-path Swift
+
+test:
+	swift test --package-path Swift

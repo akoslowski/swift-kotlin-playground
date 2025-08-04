@@ -22,5 +22,12 @@ let package = Package(
             name: "kotlin-consumer",
             dependencies: ["Kotlib"]
         ),
+
+        .testTarget(
+            name: "kotlin-consumer-tests", 
+            dependencies: [
+                "Kotlib",
+            ]
+        )
     ]
 )
