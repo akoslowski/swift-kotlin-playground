@@ -52,8 +52,11 @@ import Testing
     #expect(f.getSet() == [1, 2])
 
     var str = ""
-    f.withLamda { incomingString in
-        str = "### \(incomingString) ###"
+    f.withIncomingString { string in
+        str = "### \(string) ###"
     }
     #expect(str == "### Hello from Kotlin! ###")
+
+    let value = f.withReturningInt { 123 }
+    #expect(value == 1123)
 }

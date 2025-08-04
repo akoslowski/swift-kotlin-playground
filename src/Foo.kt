@@ -32,8 +32,11 @@ public data class Foo(
         println(collection)
     }
 
-    public fun withLamda(block: (String) -> Unit) {
+    public fun withIncomingString(block: (String) -> Unit) {
         block("Hello from Kotlin!")
     }
 
+    public fun withReturningInt(block: () -> Int): Int {
+        return block() + 1000
+    }
 }
