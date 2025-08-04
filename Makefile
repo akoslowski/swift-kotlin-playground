@@ -3,26 +3,21 @@ BUILD_DIR := ./build
 SRC_DIRS := ./src
 SRC_FILES := $(shell find $(SRC_DIRS) -name '*.kt')
 FRAMEWORK_NAME := Kotlib.framework
-PACKAGE_SWIFT_PATH := $(BUILD_DIR)/Package.swift
-
-define PACKAGE_SWIFT_CONTENT
-// swift-tools-version:6.1
-import PackageDescription
-let package = Package(
-    name: "Kotlib",
-    platforms: [.iOS(.v18), .macOS(.v15)],
-    products: [.library(name: "Kotlib", targets: ["Kotlib"])],
-    targets: [.binaryTarget(name: "Kotlib", path: "Kotlib.xcframework")]
-)
-endef
-
-.PHONY: clean macos
 
 arch_path = $(BUILD_DIR)/frameworks/$(strip $1)
-framework_arch_path = $(BUILD_DIR)/frameworks/$(strip $1)/$(FRAMEWORK_NAME)
+framework_arch_path = $(call arch_path, $1)/$(FRAMEWORK_NAME)
+
+PACKAGE_SWIFT_PATH := $(BUILD_DIR)/Package.swift
+FRAMEWORK_MACOS_ARM64 := $(call framework_arch_path, macos_arm64)
+FRAMEWORK_MACOS_X64 := $(call framework_arch_path, macos_x64)
+FRAMEWORK_MACOS_ARM64_X64 := $(call framework_arch_path, macos_arm64_x64)
+FRAMEWORK_IOS_ARM64 := $(call framework_arch_path, ios_arm64)
+FRAMEWORK_IOS_SIMULATOR_ARM64 := $(call framework_arch_path, ios_simulator_arm64)
+
+.PHONY: clean macos ios universal
 
 build_framework = $(KOTLIN_NATIVE_BIN) $(SRC_FILES) \
-		-target $1 \
+		-target $(strip $1) \
 		-produce framework \
 		-module-name Kotlib \
 		-Xbinary=bundleId=com.kotlib.framework \
@@ -42,10 +37,13 @@ $(PACKAGE_SWIFT_PATH): $(BUILD_DIR)
 	@echo "    targets: [.binaryTarget(name: \"Kotlib\", path: \"Kotlib.xcframework\")]" >> $(PACKAGE_SWIFT_PATH)
 	@echo ")" >> $(PACKAGE_SWIFT_PATH)
 
-macos: $(PACKAGE_SWIFT_PATH)
+$(FRAMEWORK_MACOS_ARM64): $(BUILD_DIR) $(SRC_FILES)
 	$(call build_framework, macos_arm64)
+
+$(FRAMEWORK_MACOS_X64): $(BUILD_DIR) $(SRC_FILES)
 	$(call build_framework, macos_x64)
-	
+
+$(FRAMEWORK_MACOS_ARM64_X64): $(FRAMEWORK_MACOS_ARM64) $(FRAMEWORK_MACOS_X64)
 	mkdir -p $(call arch_path, macos_arm64_x64)
 	cp -R $(call framework_arch_path, macos_x64) $(call arch_path, macos_arm64_x64)
 	cp -R $(call framework_arch_path, macos_x64).dSYM $(call arch_path, macos_arm64_x64)
@@ -55,25 +53,29 @@ macos: $(PACKAGE_SWIFT_PATH)
 	$(call framework_arch_path, macos_arm64)/Versions/A/Kotlib \
 	-output $(call framework_arch_path, macos_arm64_x64)/Versions/A/Kotlib
 
+$(FRAMEWORK_IOS_ARM64): $(BUILD_DIR) $(SRC_FILES)
+	$(call build_framework, ios_arm64)
+
+$(FRAMEWORK_IOS_SIMULATOR_ARM64): $(BUILD_DIR) $(SRC_FILES)
+	$(call build_framework, ios_simulator_arm64)
+
+# MARK: phonies
+
+macos: $(PACKAGE_SWIFT_PATH) $(FRAMEWORK_MACOS_ARM64_X64)
+	rm -Rf $(BUILD_DIR)/Kotlib.xcframework
 	xcodebuild -create-xcframework \
 		-framework $(call framework_arch_path, macos_arm64_x64) \
 		-output $(BUILD_DIR)/Kotlib.xcframework
 
-ios: $(PACKAGE_SWIFT_PATH)
-	$(call build_framework, ios_arm64)
-	$(call build_framework, ios_simulator_arm64)
-
+ios: $(PACKAGE_SWIFT_PATH) $(FRAMEWORK_IOS_ARM64) $(FRAMEWORK_IOS_SIMULATOR_ARM64)
+	rm -Rf $(BUILD_DIR)/Kotlib.xcframework
 	xcodebuild -create-xcframework \
 		-framework $(call framework_arch_path, ios_arm64) \
 		-framework $(call framework_arch_path, ios_simulator_arm64) \
 		-output $(BUILD_DIR)/Kotlib.xcframework
 
-universal: $(PACKAGE_SWIFT_PATH)
-	$(MAKE) macos
-	$(MAKE) ios
-	
-	rm -rf $(BUILD_DIR)/Kotlib.xcframework
-
+universal: $(PACKAGE_SWIFT_PATH) $(FRAMEWORK_MACOS_ARM64_X64) $(FRAMEWORK_IOS_ARM64) $(FRAMEWORK_IOS_SIMULATOR_ARM64)
+	rm -Rf $(BUILD_DIR)/Kotlib.xcframework
 	xcodebuild -create-xcframework \
 		-framework $(call framework_arch_path, macos_arm64_x64) \
 		-framework $(call framework_arch_path, ios_arm64) \
