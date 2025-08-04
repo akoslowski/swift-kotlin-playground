@@ -21,6 +21,7 @@ build_framework = $(KOTLIN_NATIVE_BIN) $(SRC_FILES) \
 		-produce framework \
 		-module-name Kotlib \
 		-Xbinary=bundleId=com.kotlib.framework \
+		-Xbackend-threads=0 \
 		-Xexport-kdoc \
 		-output $(call framework_arch_path, $1)
 
