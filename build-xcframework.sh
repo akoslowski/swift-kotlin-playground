@@ -4,75 +4,65 @@
 
 set -e
 
-echo "Building Kotlin code..."
+function build_target {
+    KOTLIN_NATIVE_BIN="kotlinc-native"
+    if ! command -v $KOTLIN_NATIVE_BIN &> /dev/null; then
+        echo "Error: $KOTLIN_NATIVE_BIN is not installed or not in your PATH."
+        exit 1
+    fi
 
-KOTLIN_NATIVE_BIN="kotlinc-native"
+    local output_path="build/frameworks"
+    local source_path="src"
 
-# Ensure kotlinc-native is available
-if ! command -v $KOTLIN_NATIVE_BIN &> /dev/null; then
-    echo "Error: $KOTLIN_NATIVE_BIN is not installed or not in your PATH."
-    exit 1
-fi
-
-all_targets=(
-    "ios_arm64"
-    "ios_x64"
-    "ios_simulator_arm64"
-    "macos_arm64"
-    "macos_x64"
-)
-
-file_list=$(find src -name "*.kt" | tr '\n' ' ')
-
-for target in "${all_targets[@]}"; do
+    local target=$1
     echo "Building for target: $target"
+
+    file_list=$(find $source_path -name "*.kt" | tr '\n' ' ')
     $KOTLIN_NATIVE_BIN $file_list \
         -target "$target" \
         -produce framework \
         -module-name Kotlib \
         -Xbinary=bundleId=com.kotlib.framework \
         -Xexport-kdoc \
-        -output "build/frameworks/${target}/Kotlib"
+        -output "$output_path/${target}/Kotlib"
+}
+
+echo "Building Kotlin code..."
+
+all_targets=(
+    "ios_arm64"
+    "ios_simulator_arm64"
+    "macos_arm64"
+    "macos_x64"
+)
+
+rm -rf build/frameworks
+
+for target in "${all_targets[@]}"; do
+    build_target "$target"
 done
 
 # Remove existing XCFramework if it exists
 rm -rf build/Kotlib.xcframework
 
-# Create a combined simulator framework
-echo "Combining simulator frameworks..."
-mkdir -p build/frameworks/ios_simulator
-cp -R build/frameworks/ios_x64/Kotlib.framework build/frameworks/ios_simulator/
-cp -R build/frameworks/ios_x64/Kotlib.framework.dSYM build/frameworks/ios_simulator/
-
-# Create a fat binary with both simulator architectures
-lipo -create \
-    build/frameworks/ios_x64/Kotlib.framework/Kotlib \
-    build/frameworks/ios_simulator_arm64/Kotlib.framework/Kotlib \
-    -output build/frameworks/ios_simulator/Kotlib.framework/Kotlib
-
 # Create a combined macOS framework
 echo "Combining macOS frameworks..."
-mkdir -p build/frameworks/macos
-cp -R build/frameworks/macos_x64/Kotlib.framework build/frameworks/macos/
-cp -R build/frameworks/macos_x64/Kotlib.framework.dSYM build/frameworks/macos/
+FAT_MACOS_FRAMEWORK_PATH="build/frameworks/macos_arm64_x64"
+mkdir -p $FAT_MACOS_FRAMEWORK_PATH
+cp -R build/frameworks/macos_x64/Kotlib.framework $FAT_MACOS_FRAMEWORK_PATH
+cp -R build/frameworks/macos_x64/Kotlib.framework.dSYM $FAT_MACOS_FRAMEWORK_PATH
 
 # Create a fat binary with both macOS architectures
 lipo -create \
     build/frameworks/macos_x64/Kotlib.framework/Versions/A/Kotlib \
     build/frameworks/macos_arm64/Kotlib.framework/Versions/A/Kotlib \
-    -output build/frameworks/macos/Kotlib.framework/Versions/A/Kotlib
-
-# Ensure the main binary symlink exists for macOS framework
-MACOS_FRAMEWORK="build/frameworks/macos/Kotlib.framework"
-if [ ! -L "$MACOS_FRAMEWORK/Kotlib" ]; then
-    ln -sfh "Versions/Current/Kotlib" "$MACOS_FRAMEWORK/Kotlib"
-fi
+    -output $FAT_MACOS_FRAMEWORK_PATH/Kotlib.framework/Versions/A/Kotlib
 
 # Create XCFramework with device and combined simulator
 xcodebuild -create-xcframework \
     -framework build/frameworks/ios_arm64/Kotlib.framework \
-    -framework build/frameworks/ios_simulator/Kotlib.framework \
-    -framework build/frameworks/macos/Kotlib.framework \
+    -framework build/frameworks/ios_simulator_arm64/Kotlib.framework \
+    -framework $FAT_MACOS_FRAMEWORK_PATH/Kotlib.framework \
     -output build/Kotlib.xcframework
 
 echo "Creating Package.swift for Swift Package Manager..."
