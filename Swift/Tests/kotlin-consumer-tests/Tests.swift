@@ -3,7 +3,7 @@ import Testing
 @testable import Kotlib
 
 @Test func testExamples() {
-    #expect(KotlibKt.greet() == "Hello from Kotlin Multiplatform!")
+    #expect(KotlibKt.greet() == "www.helloworld.com")
     #expect(KotlibKt.calculate(a: 12, b: 12) == 24)
 
     #expect(Person(name: "Alice", age: 30).info() == "Alice is 30 years old")

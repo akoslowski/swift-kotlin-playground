@@ -1,10 +1,12 @@
+import com.eygraber.uri.Url
+
 /**
  * Returns a friendly greeting message from Kotlin Multiplatform
  * 
  * @return A greeting string
  */
 fun greet(): String {
-    return "Hello from Kotlin Multiplatform!"
+    return Url.parse("https://www.helloworld.com/your-name").host
 }
 
 /**

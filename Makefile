@@ -2,6 +2,14 @@ KOTLIN_NATIVE_BIN := kotlinc-native
 BUILD_DIR := ./build
 SRC_DIRS := ./src
 SRC_FILES := $(shell find $(SRC_DIRS) -name '*.kt')
+
+dependencies = \
+  $(if $(filter macos_arm64,$(1)),libs/uri-kmp-macosarm64-0.0.20.klib, \
+    $(if $(filter macos_x64,$(1)),libs/uri-kmp-macosx64-0.0.20.klib, \
+      $(if $(filter ios_arm64,$(1)),libs/uri-kmp-iosarm64-0.0.20.klib, \
+        $(if $(filter ios_simulator_arm64,$(1)),libs/uri-kmp-iossimulatorarm64-0.0.20.klib, \
+          $(error Unknown target: $(1))))))
+
 FRAMEWORK_NAME := Kotlib.framework
 XCFRAMEWORK_NAME := Kotlib.xcframework
 XCFRAMEWORK_OUTPUT_PATH := $(BUILD_DIR)/$(XCFRAMEWORK_NAME)
@@ -19,6 +27,7 @@ FRAMEWORK_IOS_SIMULATOR_ARM64 := $(call framework_arch_path, ios_simulator_arm64
 build_framework = $(KOTLIN_NATIVE_BIN) $(SRC_FILES) \
 		-target $(strip $1) \
 		-produce framework \
+		-library $(call dependencies, strip $1) \
 		-module-name Kotlib \
 		-Xbinary=bundleId=com.kotlib.framework \
 		-Xbackend-threads=0 \
