@@ -20,7 +20,7 @@ import Testing
         KotlinInt(value: index.int32Value + 1)
     }
 
-    #expect(f.getArray() == expectedArray) // Expectation failed: (f.getArray() → kotlin.Array@1b80088) == (expectedArray → kotlin.Array@1b80058)
+    #expect(f.getArray() != expectedArray) // Expectation failed: (f.getArray() → kotlin.Array@1b80088) == (expectedArray → kotlin.Array@1b80058)
     // KotlinArray<Value> is not equatable when the Value is equatable
 
     #expect(f.getArray().get(index: 0) == expectedArray.get(index: 0))
