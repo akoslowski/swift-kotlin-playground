@@ -51,6 +51,7 @@ macos: $(PACKAGE_SWIFT_PATH) $(FRAMEWORK_MACOS_ARM64)
 		-output $(XCFRAMEWORK_OUTPUT_PATH)
 
 clean:
+	rm -rf Swift/.build
 	rm -rf $(BUILD_DIR)
 
 run:
