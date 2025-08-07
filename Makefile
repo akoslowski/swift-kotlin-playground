@@ -25,6 +25,7 @@ FRAMEWORK_IOS_ARM64 := $(call framework_arch_path, ios_arm64)
 FRAMEWORK_IOS_SIMULATOR_ARM64 := $(call framework_arch_path, ios_simulator_arm64)
 
 build_framework = $(KOTLIN_NATIVE_BIN) $(SRC_FILES) \
+		-g \
 		-target $(strip $1) \
 		-produce framework \
 		-library $(call dependencies, strip $1) \
